@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Giao tuyến của (MEF) và (MNPQ)</title>
+<style>
+:root{--bg:#fafaf7;--fg:#1c1c1a;--mut:#6b6b66;--card:#fff;--bd:#dcdcd4;--sec:#d9480f;--mid:#0b7a4b;--face:#2b6cb0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--fg:#ecece6;--mut:#a0a09a;--card:#202225;--bd:#35373b;--sec:#ff8c5a;--mid:#4fd49a;--face:#6aa6e8}}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}p.s{margin:0 0 12px;color:var(--mut);font-size:14px}
+canvas{width:100%;height:auto;aspect-ratio:4/3;background:var(--card);border:1px solid var(--bd);border-radius:12px;touch-action:none;cursor:grab}
+.c{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;margin:10px 0;font-size:14px}
+.c input{min-width:0}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.65}
+.o{color:var(--sec);font-weight:600}.g{color:var(--mid);font-weight:600}
+</style></head><body><div class="w">
+<h1>Giao tuyến của (MEF) và (MNPQ)</h1>
+<p class="s">Chóp S.ABCD có đáy là tứ giác bất kì (các cạnh đối không song song, độ dài khác nhau); M, N, P, Q là trung điểm SA, SB, SC, SD; E ∈ AB, F ∈ CD. Kéo để xoay hình.</p>
+<canvas id="cv" width="800" height="600"></canvas>
+<div class="c">
+<span>AE/AB</span><input id="e" type="range" min="0.1" max="0.9" step="0.01" value="0.2"><b id="ev">0.20</b>
+<span>CF/CD</span><input id="f" type="range" min="0.1" max="0.9" step="0.01" value="0.2"><b id="fv">0.20</b>
+</div>
+<div style="font-size:14px;margin-bottom:10px"><span class="g">■</span> mặt phẳng (MNPQ) &nbsp; <span class="o">■</span> mặt phẳng (MEF) &nbsp; <span class="o">━</span> giao tuyến MK<br><i id="st" style="color:var(--mut)"></i></div>
+<div class="box">
+<b>Cách xác định:</b><br>
+1. MN, NP, PQ, QM là các đường trung bình của các tam giác SAB, SBC, SCD, SDA nên MN ∥ AB, NP ∥ BC. Suy ra <span class="g">(MNPQ) ∥ (ABCD)</span>.<br>
+2. M là điểm chung của (MEF) và (MNPQ).<br>
+3. (MEF) cắt (ABCD) theo EF. Một mặt phẳng cắt hai mặt phẳng song song theo hai giao tuyến song song, nên giao tuyến của (MEF) và (MNPQ) là đường thẳng <span class="o">d đi qua M và song song với EF</span>.<br>
+4. Trong mặt phẳng (MNPQ), đường thẳng d cắt cạnh của tứ giác MNPQ tại <span class="o">K</span> (K ∈ NP hoặc K ∈ PQ).<br>
+<b>Kết luận:</b> (MEF) ∩ (MNPQ) = <span class="o">MK</span>, với MK ∥ EF.
+</div></div>
+<script>
+const cv=document.getElementById('cv'),g=cv.getContext('2d');
+const V={A:[-2.4,0,1.2],B:[2.2,0,0.6],C:[1.2,0,-2.2],D:[-1.8,0,-0.5],S:[0.1,3.2,-0.1]};
+const add=(a,b)=>a.map((v,i)=>v+b[i]),sub=(a,b)=>a.map((v,i)=>v-b[i]),mul=(a,k)=>a.map(v=>v*k);
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const L=(a,b,u)=>add(a,mul(sub(b,a),u));
+const Mid={M:L(V.S,V.A,.5),N:L(V.S,V.B,.5),P:L(V.S,V.C,.5),Q:L(V.S,V.D,.5)};
+const faces=[['A','B','C','D'],['S','A','B'],['S','B','C'],['S','C','D'],['S','D','A']];
+const edges=[['A','B',[0,1]],['B','C',[0,2]],['C','D',[0,3]],['D','A',[0,4]],['S','A',[1,4]],['S','B',[1,2]],['S','C',[2,3]],['S','D',[3,4]]];
+const cen=[0,0,0];Object.values(V).forEach(p=>p.forEach((v,i)=>cen[i]+=v/5));
+const NR=faces.map(f=>{let n=cr(sub(V[f[1]],V[f[0]]),sub(V[f[2]],V[f[0]]));if(dot(n,sub(V[f[0]],cen))<0)n=mul(n,-1);return n});
+// giải p + s*u = a + t*(b-a) trong (x,z)
+function inter(p,u,a,b){const v=sub(b,a);const den=u[0]*v[2]-u[2]*v[0];if(Math.abs(den)<1e-9)return null;
+ const w=sub(a,p);const s=(w[0]*v[2]-w[2]*v[0])/den,t=(w[0]*u[2]-w[2]*u[0])/den;return{s,t}}
+let yaw=-0.6,pit=0.45,e=0.2,f=0.2;
+function rot(p){let[x,y,z]=p;let c=Math.cos(yaw),s=Math.sin(yaw);[x,z]=[c*x+s*z,-s*x+c*z];c=Math.cos(pit);s=Math.sin(pit);[y,z]=[c*y-s*z,s*y+c*z];return[x,y,z]}
+function pr(p){const r=rot(sub(p,cen));const k=14/(14-r[2]);return[400+r[0]*k*92,305-r[1]*k*92]}
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function draw(){
+ const fg=css('--fg'),sec=css('--sec'),mc=css('--mid'),fc=css('--face');
+ g.clearRect(0,0,800,600);
+ const E=L(V.A,V.B,e),F=L(V.C,V.D,f);
+ const{M,N,P,Q}=Mid;
+ const u=sub(F,E);
+ // K = d ∩ NP hoặc PQ (d qua M, // EF)
+ let K=null,onPQ=false;
+ for(const[a,b]of[[N,P],[P,Q]]){const r=inter(M,u,a,b);if(r&&r.t>=-1e-6&&r.t<=1+1e-6&&Math.abs(r.s)>1e-6){K=L(a,b,r.t);onPQ=(b===Q);break}}
+ const front=NR.map(n=>rot(n)[2]>0);
+ faces.forEach((fa,i)=>{g.beginPath();fa.forEach((k,j)=>{const p=pr(V[k]);j?g.lineTo(...p):g.moveTo(...p)});g.closePath();g.globalAlpha=front[i]?0.09:0.03;g.fillStyle=fc;g.fill()});
+ // (MNPQ)
+ g.beginPath();[M,N,P,Q].forEach((p,j)=>{const q=pr(p);j?g.lineTo(...q):g.moveTo(...q)});g.closePath();g.globalAlpha=0.22;g.fillStyle=mc;g.fill();
+ // (MEF)
+ g.beginPath();(K?[M,E,F,K]:[M,E,F]).forEach((p,j)=>{const q=pr(p);j?g.lineTo(...q):g.moveTo(...q)});g.closePath();g.globalAlpha=0.35;g.fillStyle=sec;g.fill();g.globalAlpha=1;
+ const line=(a,b,vis,w,col)=>{g.beginPath();g.setLineDash(vis?[]:[6,5]);g.lineWidth=w;g.strokeStyle=col;g.moveTo(...pr(a));g.lineTo(...pr(b));g.stroke();g.setLineDash([])};
+ edges.forEach(([a,b,fs])=>line(V[a],V[b],fs.some(i=>front[i]),1.8,fg));
+ [[M,N,1],[N,P,2],[P,Q,3],[Q,M,4]].forEach(([a,b,i])=>line(a,b,front[i],2,mc));
+ line(E,F,front[0],3,sec);          // EF trong đáy
+ line(M,E,front[1],2.5,sec);        // ME trong (SAB)
+ line(M,F,false,2.2,sec);           // MF
+ if(K){line(M,K,false,4,sec);line(K,F,onPQ?front[3]:false,3,sec)}        // giao tuyến
+ const c0=pr(cen);
+ const lab=(t,p,col)=>{const q=pr(p);let dx=q[0]-c0[0],dy=q[1]-c0[1];const d=Math.hypot(dx,dy)||1;g.fillStyle=col;g.font='bold 18px system-ui';g.textAlign='center';g.textBaseline='middle';g.beginPath();g.arc(q[0],q[1],3.5,0,7);g.fill();g.fillText(t,q[0]+dx/d*16,q[1]+dy/d*16)};
+ Object.keys(V).forEach(k=>lab(k,V[k],fg));
+ Object.keys(Mid).forEach(k=>lab(k,Mid[k],mc));
+ lab('E',E,sec);lab('F',F,sec);if(K)lab('K',K,sec);
+ document.getElementById('st').textContent=K?'':'Với vị trí E, F này, d chỉ chạm tứ giác MNPQ tại M. Hãy kéo thanh trượt để K xuất hiện.';
+}
+document.getElementById('e').oninput=x=>{e=+x.target.value;document.getElementById('ev').textContent=e.toFixed(2);draw()};
+document.getElementById('f').oninput=x=>{f=+x.target.value;document.getElementById('fv').textContent=f.toFixed(2);draw()};
+let dr=false,lx,ly;
+cv.onpointerdown=x=>{dr=true;lx=x.clientX;ly=x.clientY;cv.setPointerCapture(x.pointerId)};
+cv.onpointerup=()=>dr=false;
+cv.onpointermove=x=>{if(!dr)return;yaw+=(x.clientX-lx)*0.008;pit=Math.max(-1.4,Math.min(1.4,pit+(x.clientY-ly)*0.008));lx=x.clientX;ly=x.clientY;draw()};
+matchMedia('(prefers-color-scheme:dark)').onchange=draw;
+draw();
+</script></body></html>
